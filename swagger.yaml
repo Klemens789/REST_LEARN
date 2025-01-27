@@ -1,0 +1,226 @@
+swagger: "2.0"
+info:
+  title: "API do zarządzania książkami"
+  description: "Pełne CRUD API do obsługi książek, pozwalające na zarządzanie zasobami książkowymi poprzez operacje HTTP."
+  version: "1.0"
+  contact:
+    name: "Dział wsparcia"
+    email: "support@booksapi.com"
+    url: "http://www.booksapi.com"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+
+host: "localhost:5000"
+schemes:
+  - http
+
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: "Podaj token w formacie 'Bearer <token>'"
+
+tags:
+  - name: "Książki"
+    description: "Operacje związane z książkami"
+  - name: "Wypożyczenia"
+    description: "Obsługa wypożyczeń książek"
+
+paths:
+  /books:
+    get:
+      tags:
+        - Książki
+      summary: "Pobierz wszystkie książki"
+      description: "Zwraca listę wszystkich książek przechowywanych w bazie danych."
+      security:
+        - Bearer: []
+      responses:
+        200:
+          description: "Lista książek została pobrana pomyślnie."
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                author:
+                  type: string
+                description:
+                  type: string
+                  example: "Opis książki"
+                available:
+                  type: boolean
+        401:
+          description: "Brak autoryzacji"
+        500:
+          description: "Błąd serwera"
+
+    post:
+      tags:
+        - Książki
+      summary: "Dodaj nową książkę"
+      security:
+        - Bearer: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            required:
+              - title
+              - author
+              - description
+            properties:
+              title:
+                type: string
+              author:
+                type: string
+              description:
+                type: string
+                example: "Krótki opis książki"
+      responses:
+        201:
+          description: "Książka dodana pomyślnie."
+        400:
+          description: "Błąd walidacji danych"
+        500:
+          description: "Błąd serwera"
+
+  /books/{book_id}:
+    parameters:
+      - in: path
+        name: book_id
+        required: true
+        type: integer
+        description: "Unikalny identyfikator książki"
+
+    put:
+      tags:
+        - Książki
+      summary: "Zaktualizuj książkę"
+      security:
+        - Bearer: []
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required:
+              - title
+              - author
+              - description
+            properties:
+              title:
+                type: string
+              author:
+                type: string
+              description:
+                type: string
+                example: "Zaktualizowany opis książki"
+      responses:
+        200:
+          description: "Książka zaktualizowana pomyślnie."
+        404:
+          description: "Książka nie znaleziona"
+
+    delete:
+      tags:
+        - Książki
+      summary: "Usuń książkę"
+      security:
+        - Bearer: []
+      responses:
+        200:
+          description: "Książka usunięta pomyślnie."
+        404:
+          description: "Książka nie znaleziona."
+
+  /borrow:
+    get:
+      tags:
+        - Wypożyczenia
+      summary: "Pobierz listę wypożyczeń"
+      description: "Zwraca listę wszystkich aktywnych wypożyczeń."
+      security:
+        - Bearer: []
+      responses:
+        200:
+          description: "Lista wypożyczeń pobrana pomyślnie"
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                book_id:
+                  type: integer
+                user_name:
+                  type: string
+                borrow_date:
+                  type: string
+                return_date:
+                  type: string
+        401:
+          description: "Brak autoryzacji"
+        500:
+          description: "Błąd serwera"
+
+    post:
+      tags:
+        - Wypożyczenia
+      summary: "Wypożycz książkę"
+      description: "Tworzy rezerwację książki przez użytkownika."
+      security:
+        - Bearer: []
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required:
+              - book_id
+              - user_name
+            properties:
+              book_id:
+                type: integer
+                example: 1
+              user_name:
+                type: string
+                example: "Jan Kowalski"
+      responses:
+        200:
+          description: "Książka wypożyczona pomyślnie"
+        400:
+          description: "Błąd walidacji lub książka już wypożyczona"
+        404:
+          description: "Książka nie znaleziona"
+
+  /return/{borrow_id}:
+    post:
+      tags:
+        - Wypożyczenia
+      summary: "Zwróć książkę"
+      description: "Zwrócenie książki przez użytkownika"
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: borrow_id
+          required: true
+          type: integer
+          description: "ID wypożyczenia"
+      responses:
+        200:
+          description: "Książka zwrócona pomyślnie"
+        400:
+          description: "Książka została już zwrócona"
+        404:
+          description: "Nie znaleziono wypożyczenia"
